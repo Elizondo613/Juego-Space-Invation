@@ -9,8 +9,8 @@ const canvas = document.getElementById('gameCanvas');
 
         // Configuración de dificultad
         const difficulties = {
-            easy: { enemySpeed: 1, bulletSpeed: 7, shootingRate: 30 },
-            medium: { enemySpeed: 1.5, bulletSpeed: 8, shootingRate: 20 },
+            easy: { enemySpeed: 1, bulletSpeed: 4, shootingRate: 30 },
+            medium: { enemySpeed: 1.5, bulletSpeed: 7, shootingRate: 20 },
             hard: { enemySpeed: 2, bulletSpeed: 9, shootingRate: 10 }
         };
         let currentDifficulty = 'easy';
@@ -147,27 +147,57 @@ const canvas = document.getElementById('gameCanvas');
         document.addEventListener('keydown', e => keys[e.key] = true);
         document.addEventListener('keyup', e => keys[e.key] = false);
 
-        // Control táctil
+        // Variables para control táctil
+        let touchSensitivity = 1.5; // Aumentamos la sensibilidad
+        let lastTouchX = null;
+        let lastTouchTime = 0;
+        const TOUCH_THRESHOLD = 300; // ms para distinguir entre tap y movimiento
+
+        // Control táctil mejorado
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
+            const touch = e.touches[0];
+            lastTouchX = touch.clientX;
+            lastTouchTime = Date.now();
             isShooting = true;
-            lastTouch = e.touches[0].clientX;
+
+            // Reiniciar juego si está en game over
+            if (gameOver) {
+                const rect = canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                // Verificar si el toque está en el área del mensaje de game over
+                if (y > canvas.height/2 - 50 && y < canvas.height/2 + 100) {
+                    resetGame();
+                }
+            }
         });
 
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
-            if (lastTouch) {
+            if (lastTouchX !== null && !gameOver) {
                 const touch = e.touches[0];
-                const diff = touch.clientX - lastTouch;
-                player.x += diff * 0.5;
-                lastTouch = touch.clientX;
+                const deltaX = touch.clientX - lastTouchX;
+                // Aplicamos la sensibilidad aumentada al movimiento
+                player.x += deltaX * touchSensitivity;
+                
+                // Mantener el jugador dentro de los límites
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+                
+                lastTouchX = touch.clientX;
             }
         });
 
         canvas.addEventListener('touchend', e => {
             e.preventDefault();
             isShooting = false;
-            lastTouch = null;
+            lastTouchX = null;
+
+            // Detectar tap para reinicio
+            if (gameOver && Date.now() - lastTouchTime < TOUCH_THRESHOLD) {
+                resetGame();
+            }
         });
 
         // Actualizar
@@ -303,21 +333,49 @@ const canvas = document.getElementById('gameCanvas');
                 ctx.textAlign = 'center';
                 ctx.fillText('Game Over!', canvas.width/2, canvas.height/2);
                 ctx.font = '24px "Press Start 2P"';
-                ctx.fillText('Click para reiniciar', canvas.width/2, canvas.height/2 + 50);
+                // Cambio el mensaje para que sea más claro en móviles
+                ctx.fillText('Toca para reiniciar', canvas.width/2, canvas.height/2 + 50);
             }
         }
 
+        // Ajuste automático del canvas para mejor visualización en móvil
+        function resizeCanvas() {
+            const maxWidth = window.innerWidth * 0.95;
+            const maxHeight = window.innerHeight * 0.9;
+            const ratio = canvas.width / canvas.height;
+
+            let newWidth = maxWidth;
+            let newHeight = maxWidth / ratio;
+
+            if (newHeight > maxHeight) {
+                newHeight = maxHeight;
+                newWidth = maxHeight * ratio;
+            }
+
+            canvas.style.width = `${newWidth}px`;
+            canvas.style.height = `${newHeight}px`;
+        }
+
+        // Llamar a resizeCanvas cuando la ventana cambie de tamaño
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Función de reinicio del juego
+        function resetGame() {
+            gameOver = false;
+            score = 0;
+            scoreElement.textContent = 'Score: 0';
+            enemies.length = 0;
+            bullets.length = 0;
+            enemyBullets.length = 0;
+            player.x = canvas.width / 2;
+            createEnemies();
+        }
+
         // Click para reiniciar
-        canvas.addEventListener('click', () => {
+        canvas.addEventListener('click', (e) => {
             if (gameOver) {
-                gameOver = false;
-                score = 0;
-                scoreElement.textContent = 'Score: 0';
-                enemies.length = 0;
-                bullets.length = 0;
-                enemyBullets.length = 0;
-                player.x = canvas.width / 2;
-                createEnemies();
+                resetGame();
             }
         });
 
