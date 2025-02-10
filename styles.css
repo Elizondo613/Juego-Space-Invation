@@ -1,0 +1,75 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #000033;
+    touch-action: none;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+}
+
+#gameCanvas {
+    border: 2px solid #fff;
+    max-width: 100%;
+    max-height: 100vh;
+}
+
+/* Estilo del score */
+#score {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: white;
+    font-size: 20px;
+    z-index: 10;
+}
+
+/* Estilo de los botones de dificultad */
+#difficulty {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.diff-btn {
+    padding: 5px 10px;
+    background: #444;
+    color: white;
+    border: 1px solid #666;
+    cursor: pointer;
+}
+
+.diff-btn.active {
+    background: #00ff00;
+    color: black;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    /* Alinear el score y los botones de dificultad verticalmente */
+    #score {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+    }
+
+    #difficulty {
+        top: 50px; /* Debajo del score */
+        right: 50%;
+        transform: translateX(50%);
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .diff-btn {
+        padding: 5px 15px;
+        font-size: 14px;
+    }
+}
